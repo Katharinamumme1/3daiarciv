@@ -1,0 +1,276 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>3D Models with Enhanced Controls</title>
+    <style>
+        body {
+            margin: 0;
+            overflow: hidden;
+            font-family: Arial, sans-serif;
+            background-color: white;
+        }
+
+        canvas {
+            display: block;
+        }
+
+        #center-button {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            padding: 15px 30px;
+            background-color: #007bff;
+            color: white;
+            border: none;
+            border-radius: 10px;
+            font-size: 18px;
+            cursor: pointer;
+            animation: pulse 1.5s infinite;
+            z-index: 10;
+        }
+
+        #center-button:hover {
+            background-color: #0056b3;
+        }
+
+        @keyframes pulse {
+
+            0%,
+            100% {
+                transform: translate(-50%, -50%) scale(1);
+            }
+
+            50% {
+                transform: translate(-50%, -50%) scale(1.1);
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <button id="center-button">Click Me</button>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/loaders/GLTFLoader.js"></script>
+    <script>
+        // Basic Three.js Setup
+        const scene = new THREE.Scene();
+        const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+        const renderer = new THREE.WebGLRenderer({ antialias: true });
+
+        renderer.setClearColor(0xffffff, 1);
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        document.body.appendChild(renderer.domElement);
+
+        // Lighting
+        const ambientLight = new THREE.AmbientLight(0xffffff, 0.5);
+        const directionalLight = new THREE.DirectionalLight(0xffffff, 0.5);
+        directionalLight.position.set(10, 10, 10);
+        scene.add(ambientLight);
+        scene.add(directionalLight);
+
+        // Materials loading helper
+        const textureLoader = new THREE.TextureLoader();
+        const materialsDirectory = 'materials';
+
+        async function loadMaterials() {
+            const materialFolders = [
+                'Metal050C_4k-JPG',
+                'Tiles132A_4k-JPG',
+                'CorrugatedSteel008A_4K-JPG',
+                'CorrugatedSteel008B_4K-JPG',
+                'DiamondPlate005A_4K-JPG',
+                'DiamondPlate005B_4K-JPG',
+                'DiamondPlate005D_4K-JPG',
+                'DiamondPlate006A_4K-JPG',
+                'DiamondPlate006D_4K-JPG',
+                'DiamondPlate008A_4K-JPG',
+                'Fabric046_4K-JPG',
+                'Fabric047_4K-JPG',
+                'Fabric048_4K-JPG',
+                'Fabric049_4K-JPG',
+                'Leather009_4K-JPG',
+                'Leather011_4K-JPG',
+                'Leather012_4K-JPG',
+                'Leather024_4K-JPG',
+                'Leather034A_4K-JPG',
+                'Leather034A_4K-JPG 2',
+                'Leather036C_4K-JPG',
+                'Metal004_4K-JPG',
+                'Metal029_4K-JPG',
+                'Metal050C_4K-JPG',
+                'MetalPlates001_4K-JPG',
+                'Moss004_4K-JPG',
+                'PaintedBricks001_4K-JPG',
+                'PaintedBricks002_4K-JPG',
+                'PaintedBricks003_4K-JPG',
+                'PaintedMetal001_4K-JPG',
+                'PaintedMetal002_4K-JPG',
+                'PaintedMetal003_4K-JPG',
+                'PaintedMetal004_4K-JPG',
+                'Sponge003_4K-JPG',
+                'TactilePaving005_4K-JPG',
+                'Terrazzo009_4K-JPG',
+                'Terrazzo010_4K-JPG',
+                'Terrazzo014_4K-JPG',
+                'Terrazzo015_4K-JPG',
+                'Terrazzo016_4K-JPG',
+                'Tiles009_4K-JPG',
+                'Tiles014_4K-JPG',
+                'Tiles031_4K-JPG',
+                'Tiles032_4K-JPG',
+                'Tiles033_4K-JPG',
+                'Tiles101_4K-JPG',
+                'Tiles102_4K-JPG',
+                'Tiles103_4K-JPG',
+                'Tiles104_4K-JPG',
+                'Tiles106_4K-JPG',
+                'Tiles108_4K-JPG',
+                'Tiles132A_4K-JPG'
+            ];
+
+            return materialFolders.map(folder => {
+                return new THREE.MeshStandardMaterial({
+                    map: textureLoader.load(`${materialsDirectory}/${folder}/${folder}_Color.jpg`),
+                    roughnessMap: textureLoader.load(`${materialsDirectory}/${folder}/${folder}_Roughness.jpg`),
+                    metalnessMap: textureLoader.load(`${materialsDirectory}/${folder}/${folder}_Metalness.jpg`),
+                    normalMap: textureLoader.load(`${materialsDirectory}/${folder}/${folder}_NormalGL.jpg`),
+                    metalness: 1,
+                    roughness: 0.3
+                });
+            });
+        }
+
+        // Load multiple models dynamically
+        const loader = new THREE.GLTFLoader();
+        const modelPaths = [
+            'models/assetmodels/Bubble_Cluster_0109205138_texture.glb',
+            'models/assetmodels/Molten_Silver_G_0109203007_texture.glb',
+            'models/assetmodels/Neon_Knot_0109204513_texture.glb',
+            'models/assetmodels/Bubble_Cluster_0109205138_texture.glb',
+            'models/assetmodels/Molten_Silver_G_0109203007_texture.glb',
+            'models/assetmodels/Neon_Knot_0109204513_texture.glb',
+            'models/assetmodels/Bubble_Cluster_0109205138_texture.glb',
+            'models/assetmodels/Molten_Silver_G_0109203007_texture.glb',
+            'models/assetmodels/Neon_Knot_0109204513_texture.glb'
+        ];
+
+        const modelObjects = [];
+
+        async function initScene() {
+            const materials = await loadMaterials();
+
+            modelPaths.forEach((modelPath) => {
+                loader.load(
+                    modelPath,
+                    (gltf) => {
+                        const model = gltf.scene;
+                        model.traverse((child) => {
+                            if (child.isMesh) {
+                                const randomMaterial = materials[Math.floor(Math.random() * materials.length)];
+                                child.material = randomMaterial;
+                            }
+                        });
+
+                        const randomScale = Math.random() * 50 + 10;
+                        model.scale.set(randomScale, randomScale, randomScale);
+                        model.position.set(
+                            (Math.random() - 0.5) * 300,
+                            (Math.random() - 0.5) * 300,
+                            (Math.random() - 0.5) * 300
+                        );
+                        scene.add(model);
+                        modelObjects.push(model);
+                    },
+                    undefined,
+                    (error) => {
+                        console.error('Error loading model:', error);
+                    }
+                );
+            });
+        }
+
+        // Animation Loop
+        function animate() {
+            requestAnimationFrame(animate);
+            renderer.render(scene, camera);
+        }
+
+        // Camera movement
+        const movementSpeed = 0.2;
+        const rotationSpeed = 0.005;
+        const keyStates = {};
+
+        document.addEventListener('keydown', (event) => {
+            keyStates[event.code] = true;
+        });
+
+        document.addEventListener('keyup', (event) => {
+            keyStates[event.code] = false;
+        });
+
+        document.addEventListener('mousemove', (event) => {
+            const mouseX = (event.clientX / window.innerWidth - 0.5) * 2;
+            const mouseY = (event.clientY / window.innerHeight - 0.5) * 2;
+            camera.rotation.y -= mouseX * rotationSpeed;
+            camera.rotation.x -= mouseY * rotationSpeed;
+        });
+
+        function handleKeyboardMovement() {
+            if (keyStates['ArrowUp'] || keyStates['KeyW']) camera.translateZ(-movementSpeed * 10);
+            if (keyStates['ArrowDown'] || keyStates['KeyS']) camera.translateZ(movementSpeed * 10);
+            if (keyStates['ArrowLeft'] || keyStates['KeyA']) camera.translateX(-movementSpeed * 10);
+            if (keyStates['ArrowRight'] || keyStates['KeyD']) camera.translateX(movementSpeed * 10);
+        }
+
+        function enhancedRepulsion(center) {
+            modelObjects.forEach((model) => {
+                const direction = new THREE.Vector3().subVectors(model.position, center).normalize();
+
+                function flyOut() {
+                    model.position.addScaledVector(direction, 20);
+                    if (model.position.length() < 2000) {
+                        requestAnimationFrame(flyOut);
+                    }
+                }
+                flyOut();
+            });
+        }
+
+        camera.position.set(0, 0, 150);
+        initScene();
+        animate();
+
+        // Adjust scene on window resize
+        window.addEventListener('resize', () => {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+        });
+
+        // Button functionality
+        const button = document.getElementById('center-button');
+        button.addEventListener('click', () => {
+            const center = new THREE.Vector3(0, 0, 0);
+            enhancedRepulsion(center);
+
+            setTimeout(() => {
+                window.location.href = 'gallery.html';
+            }, 2000); // Redirect after animation
+        });
+
+        // Animation loop with movement
+        function animateWithMovement() {
+            handleKeyboardMovement();
+            requestAnimationFrame(animateWithMovement);
+            renderer.render(scene, camera);
+        }
+
+        animateWithMovement();
+    </script>
+</body>
+
+</html>
