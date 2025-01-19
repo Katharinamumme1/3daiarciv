@@ -12,10 +12,8 @@
             font-weight: lighter;
             display: flex;
             flex-direction: column;
-            justify-content: flex-start;
-            align-items: center;
             background-color: #ffffff;
-            font-size: 2.5rem;
+            font-size: 1.5rem;
             text-transform: uppercase;
         }
 
@@ -23,23 +21,31 @@
             display: flex;
             flex-wrap: wrap;
             width: 100%;
+            height: 100%;
         }
 
         .gallery-item {
-            width: auto;
-            height: 800px;
+            width: 300px;
+            height: 300px;
             aspect-ratio: 1;
             perspective: 1000px;
             position: relative;
             background-color: #ffffff00;
             border-radius: 20px;
             overflow: hidden;
-            margin: 30px;
             display: flex;
             flex-direction: column;
             justify-content: center;
             align-items: center;
             overflow: visible;
+            /* Hover effect removed */
+            transition: transform 0.3s ease;
+            /* Smooth transition for hover effect */
+        }
+
+        .gallery-item.dragging {
+            transition: none;
+            /* Remove transition when dragging */
         }
 
         canvas {
@@ -49,106 +55,113 @@
         }
 
         .subgallery {
+            height: 50%;
             width: 100%;
-            border: 2px black solid;
+            border: solid 1.5px black;
+            position: relative;
+            overflow: scroll;
         }
 
         .font_container,
         .asset_container {
             display: flex;
             flex-wrap: wrap;
-            height: 800px;
+            height: auto;
             flex-direction: row;
             gap: 20px;
-            border: solid 2px black;
+            border: solid 1.5px black;
             position: relative;
             overflow-x: scroll;
             overflow-y: hidden;
+            margin: 0;
         }
 
-        .font-container-header {
+        .container-header {
             display: flex;
             align-items: center;
             width: 100%;
-            height: 150px;
-            position: fixed;
-            position: absolute;
+            height: 50px;
             z-index: 15;
-            border: black solid 2px;
-            font-size: 3rem;
+            border-bottom: solid 1.5px black;
+            font-size: 1.5rem;
             font-weight: lighter;
             padding-left: 50px;
+            position: sticky;
         }
 
         .material-gallery {
+            height: 100%;
             display: flex;
-            flex-direction: row-reverse;
-            padding: 0px;
-            border: solid 2px black;
-            height: 500px;
-            width: 100vw;
+            flex-direction: column;
+            padding: 10px;
+border-left: 1.5px solid black;
+            width: 10vw;
             gap: 20px;
             overflow: scroll;
         }
 
-        .marquee {
-            display: inline-block;
-            white-space: nowrap;
-            animation: scrollText 15s linear infinite;
+        .gallery-container {
+            width: 50vw;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
         }
 
-        .marquee span {
-            display: inline-block;
-            padding-left: 100%;
-        }
-
-        @keyframes scrollText {
-            0% {
-                transform: translateX(100%);
-            }
-
-            100% {
-                transform: translateX(-100%);
-            }
+        main {
+            width: 100vw;
+            height: 100vh;
+            display: flex;
+            flex-direction: row;
         }
 
         .material-item {
             width: auto;
         }
+
+        .poster-container {
+            width: 40vw;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            border: solid 1.5px black;
+            position: relative;
+            height: 100%;
+        }
     </style>
 </head>
 
 <body>
-    <div class="gallery">
-        <div class="subgallery" id="font_gallery">
-            <div class="material-gallery" id="material_gallery"></div>
-            <div>
-                <label for="scaleSlider">Model Scale:</label>
-                <input type="range" id="scaleSlider" min="0.1" max="3" step="0.1" value="1">
-            </div>
+    <main>
+        <div class="material-gallery" id="material_gallery"></div>
 
-            <div class="font_container" id="font_container1">
-                <div class="font-container-header">
-                    <button class="download-button">download</button>
-                    <div>
-                        <span>Fontname|TextToImg|Prompt:fnaiovneibeneo|Model|Seed:375937|ImgTo3d|Meshy.ai</span>
+        <div class="gallery-container">
+            <div class="gallery">
+
+                <div class="subgallery" id="font_gallery">
+                    <div class="font_container" id="font_container1">
+                        <div class="container-header">
+                            Fontname|TextToImg|Prompt:fnaiovneibeneo|Model|Seed:375937|ImgTo3d|Meshy.ai
+                        </div>
+                    </div>
+                    <div class="font_container" id="font_container2">
+                        <div class="container-header">
+                            Fontname|TextToImg|Prompt:fnaiovneibeneo|Model|Seed:375937|ImgTo3d|Meshy.ai
+                        </div>
                     </div>
                 </div>
-            </div>
-            <div class="font_container" id="font_container2">
-                <div class="font-container-header">
-                    <div>
-                        <span>Fontname|TextToImg|Prompt:fnaiovneibeneo|Model|Seed:375937|ImgTo3d|Meshy.ai</span>
-                    </div>
+
+                <div class="subgallery" id="asset_gallery">
+                    <div class="container-header ">Asset Models</div>
+                    <div class="asset_container" id="asset_container"></div>
                 </div>
             </div>
         </div>
 
-        <div class="subgallery" id="asset_gallery">
-            <h2>Asset Models</h2>
-            <div class="asset_container" id="asset_container"></div>
+        <!-- 3D Poster Canvas -->
+        <div class="poster-container" id="poster-container">
+            <canvas id="poster-canvas"></canvas>
         </div>
-    </div>
+    </main>
 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/loaders/GLTFLoader.js"></script>
@@ -159,31 +172,33 @@
         ];
         const assetContainer = document.getElementById('asset_container');
         const materialGallery = document.getElementById('material_gallery');
+        const posterCanvas = document.getElementById('poster-canvas');
+        const posterContainer = document.getElementById('poster-container');
 
         const models = [
             { path: 'models/fontmodels/font1/fluidsilver_F.glb', name: 'F', category: 'font', group: 1 },
             { path: 'models/fontmodels/font1/fluidsilver_G.glb', name: 'G', category: 'font', group: 1 },
             { path: 'models/fontmodels/font1/fluidsilver_M.glb', name: 'M', category: 'font', group: 1 },
             { path: 'models/fontmodels/font1/fluidsilver_N.glb', name: 'N', category: 'font', group: 1 },
-            { path: 'models/fontmodels/font2/fluidsilver_N.glb', name: 'Neon Knot', category: 'font', group: 2 },
+
+            { path: 'models/fontmodels/font1/fluidsilver_F.glb', name: 'F', category: 'font', group: 2 },
+            { path: 'models/fontmodels/font1/fluidsilver_G.glb', name: 'G', category: 'font', group: 2 },
+            { path: 'models/fontmodels/font1/fluidsilver_M.glb', name: 'M', category: 'font', group: 2 },
+            { path: 'models/fontmodels/font1/fluidsilver_N.glb', name: 'N', category: 'font', group: 2 },
+
             { path: 'models/assetmodels/Fractal_Bloom_0110003604_texture.glb', name: 'Fractal Bloom', category: 'asset' },
             { path: 'models/assetmodels/Spiked_Sphere_0110003610_texture.glb', name: 'Spiked Sphere', category: 'asset' },
-            { path: 'models/assetmodels/Interwoven_Radiance_0110010745_texture.glb', name: 'Spiral Bloom', category: 'asset' },
-            { path: 'models/assetmodels/Coral_Elegance_0110010258_texture.glb', name: 'Fractal Bloom', category: 'asset' },
-            { path: 'models/assetmodels/Bubble_Cluster_0109205138_texture.glb', name: 'Spiked Sphere', category: 'asset' },
+            { path: 'models/assetmodels/Coral_Elegance_0110010258_texture.glb', name: 'Coral', category: 'asset' },
+            { path: 'models/assetmodels/Bubble_Cluster_0109205138_texture.glb', name: 'bubblecluster', category: 'asset' },
+            { path: 'models/assetmodels/Interwoven_Radiance_0110010745_texture.glb', name: 'Radiance', category: 'asset' },
+            { path: 'models/assetmodels/Neon_Knot_0109204513_texture.glb', name: 'knot', category: 'asset' },
+            { path: 'models/assetmodels/Spiral_Bloom_0110003556_texture.glb', name: 'spiral', category: 'asset' },
         ];
 
-        const materials = [];
-        const textureLoader = new THREE.TextureLoader();
-
         const materialFolders = [
+            'Asphalt029B_4K-JPG',
             'Bamboo001A_4K-JPG',
-            'Metal050C_4k-JPG',
-            'Metal048A_4K-JPG',
-            'Metal048C_4K-JPG',
-            'Metal049C_4K-JPG',
             'MetalPlates004_4K-JPG',
-            'CorrugatedSteel008A_4K-JPG',
             'CorrugatedSteel008B_4K-JPG',
             'DiamondPlate005A_4K-JPG',
             'DiamondPlate005B_4K-JPG',
@@ -195,17 +210,20 @@
             'Fabric047_4K-JPG',
             'Fabric048_4K-JPG',
             'Fabric049_4K-JPG',
+            'Fabric070_4K-JPG',
             'Leather009_4K-JPG',
             'Leather011_4K-JPG',
             'Leather012_4K-JPG',
             'Leather024_4K-JPG',
             'Leather034A_4K-JPG',
-            'Leather034A_4K-JPG 2',
             'Leather036C_4K-JPG',
             'Metal004_4K-JPG',
             'Metal029_4K-JPG',
             'Metal050C_4K-JPG',
             'MetalPlates001_4K-JPG',
+            'Metal052C_4K-JPG',
+            'Metal041A_4K-JPG',
+            'Moss002_4K-JPG',
             'PaintedBricks001_4K-JPG',
             'PaintedBricks002_4K-JPG',
             'PaintedBricks003_4K-JPG',
@@ -213,8 +231,9 @@
             'PaintedMetal002_4K-JPG',
             'PaintedMetal003_4K-JPG',
             'PaintedMetal004_4K-JPG',
+            'Plastic017B_4K-JPG',
+            'Plastic017A_4K-JPG',
             'Rock042S_4K-JPG',
-            'Sponge003_4K-JPG',
             'Snow010A_4K-JPG',
             'TactilePaving005_4K-JPG',
             'Terrazzo009_4K-JPG',
@@ -222,8 +241,6 @@
             'Terrazzo014_4K-JPG',
             'Terrazzo015_4K-JPG',
             'Terrazzo016_4K-JPG',
-            'Tiles009_4K-JPG',
-            'Tiles132A_4k-JPG',
             'Tiles014_4K-JPG',
             'Tiles031_4K-JPG',
             'Tiles032_4K-JPG',
@@ -232,121 +249,165 @@
             'Tiles102_4K-JPG',
             'Tiles103_4K-JPG',
             'Tiles104_4K-JPG',
-            'Tiles106_4K-JPG',
             'Tiles108_4K-JPG',
-            'Tiles132A_4K-JPG'
-
+            'Tiles132A_4K-JPG',
+            'Tiles133A_4K-JPG',
+            'Tiles129B_4K-JPG',
+            'Asphalt029A_4K-JPG',
+            'Carpet005_4K-JPG',
+            'Carpet006_4K-JPG',
+            'Carpet010_4K-JPG',
+            'Carpet013_4K-JPG',
+            'Carpet015_4K-JPG',
+            'Concrete013_4K-JPG',
+            'Fabric007_2K-JPG',
+            'Fabric022_4K-JPG',
+            'Fabric024_4K-JPG',
+            'Fabric055_4K-JPG',
+            'Fabric056_4K-JPG',
+            'Fabric069_4K-JPG',
+            'Fence007A_4K-JPG',
+            'MetalPlates016B_4K-JPG',
+            'Sponge002_4K-JPG',
+            'TactilePaving002_4K-JPG',
+            'TactilePaving003_4K-JPG',
+            'Tape001_4K-JPG',
+            'Cork004_4K-JPG',
+            'DiamondPlate006C_4K-JPG',
+            'Fabric051_4K-JPG',
+            'Moss004_4K-JPG',
+            'Paint006_2K-JPG',
+            'Plastic014A_4K-JPG',
+            'Plastic015B_4K-JPG',
+            'Plastic016A_4K-JPG',
+            'Snow007C_2K-JPG',
+            'Sponge001_4K-JPG',
+            'Sponge003_2K-JPG',
+            'Tiles044_2K-JPG',
+            'Fabric038_4K-JPG',
+            'Fabric019_4K-JPG',
         ];
 
-        materialFolders.forEach(folder => {
-            const material = new THREE.MeshStandardMaterial({
+        const textureLoader = new THREE.TextureLoader();
+        const materials = materialFolders.map(folder => {
+            return new THREE.MeshStandardMaterial({
                 map: textureLoader.load(`materials/${folder}/${folder}_Color.jpg`),
+                normalMap: textureLoader.load(`materials/${folder}/${folder}_NormalGL.jpg`),
                 roughnessMap: textureLoader.load(`materials/${folder}/${folder}_Roughness.jpg`),
                 metalnessMap: textureLoader.load(`materials/${folder}/${folder}_Metalness.jpg`),
-                normalMap: textureLoader.load(`materials/${folder}/${folder}_NormalGL.jpg`),
-                metalness: 1,
-                roughness: 0.3
+                metalness: 0.4,
+                roughness: 1
             });
-            materials.push(material);
-
-            const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
-            renderer.setSize(400, 400);
-
-            const sphereScene = new THREE.Scene();
-            const sphereCamera = new THREE.PerspectiveCamera(75, 1, 0.1, 1000);
-            sphereCamera.position.z = 1;
-
-            const light = new THREE.AmbientLight(0xffffff, 1);
-            sphereScene.add(light);
-
-            const sphereGeometry = new THREE.SphereGeometry(0.5, 32, 32);
-            const sphereMesh = new THREE.Mesh(sphereGeometry, material);
-            sphereScene.add(sphereMesh);
-
-            const animate = () => {
-                requestAnimationFrame(animate);
-                sphereMesh.rotation.y += 0.01;
-                renderer.render(sphereScene, sphereCamera);
-            };
-            animate();
-
-            const materialItem = document.createElement('div');
-            materialItem.className = 'material-item';
-            materialItem.appendChild(renderer.domElement);
-
-            materialItem.addEventListener('click', () => {
-                applyMaterialToFontContainer(material);
-            });
-
-            materialGallery.appendChild(materialItem);
         });
 
-        const fontGroupMaterials = {};
-
-        function applyMaterialToFontContainer(material) {
-            fontContainers.forEach(container => {
-                container.querySelectorAll('.gallery-item').forEach(item => {
-                    const scene = item.scene;
-                    if (scene) {
-                        scene.traverse((child) => {
-                            if (child.isMesh) {
-                                child.material = material;
-                            }
-                        });
-                    }
-                });
+        function applyMaterialToModel(model, materials) {
+            model.traverse((child) => {
+                if (child.isMesh) {
+                    const randomMaterial = materials[Math.floor(Math.random() * materials.length)];
+                    child.material = randomMaterial;
+                }
             });
         }
 
-        function getRandomMaterial() {
-            return materials[Math.floor(Math.random() * materials.length)];
+        let isDragging = false;  // Variable, um den Dragging-Zustand zu verfolgen
+
+        function enableDragAndDrop(container, model) {
+            container.addEventListener('dragover', (event) => {
+                event.preventDefault();
+                container.style.borderColor = 'green';
+            });
+
+            container.addEventListener('dragleave', () => {
+                container.style.borderColor = 'red';
+            });
+
+            container.addEventListener('drop', (event) => {
+                event.preventDefault();
+                container.style.borderColor = 'red';
+
+                const materialIndex = event.dataTransfer.getData('text/plain');
+                if (materialIndex !== undefined) {
+                    const selectedMaterial = materials[materialIndex];
+                    applyMaterialToModel(model, [selectedMaterial]);
+                }
+            });
+
+            container.addEventListener('mousedown', (event) => {
+                isDragging = true;  // Setzt isDragging auf true, wenn das Modell geklickt wird
+                container.classList.add('dragging');  // Entfernt Hover-Effekt
+            });
+
+            container.addEventListener('mouseup', (event) => {
+                isDragging = false;  // Setzt isDragging auf false, wenn das Modell losgelassen wird
+                container.classList.remove('dragging');  // Fügt den Hover-Effekt wieder hinzu
+            });
+
+            // Bewege das Modell nur, wenn es nicht gerade gezogen wird
+            container.addEventListener('mousemove', (event) => {
+                if (isDragging) return;  // Keine Bewegung wenn das Modell gezogen wird
+
+                const rect = container.getBoundingClientRect();
+                const x = (event.clientX - rect.left) / rect.width * 2 - 1;
+                const y = -(event.clientY - rect.top) / rect.height * 2 + 1;
+                model.rotation.x = y * 0.5;
+                model.rotation.y = x * 0.5;
+            });
         }
 
-        const loader = new THREE.GLTFLoader();
+        function createMaterialGallery() {
+            materialFolders.forEach((folder, index) => {
+                const materialItem = document.createElement('div');
+                materialItem.className = 'material-item';
+                materialItem.draggable = true;
 
+                const imagePath = `materials/${folder}/${folder.split('_')[0]}.png`;
+                const image = new Image();
+                image.src = imagePath;
+                image.alt = folder;
+                image.style.width = "120px";
+                image.style.height = "120px";
+                materialItem.appendChild(image);
+
+                materialItem.addEventListener('dragstart', (event) => {
+                    event.dataTransfer.setData('text/plain', index);
+                });
+
+                materialGallery.appendChild(materialItem);
+            });
+        }
+
+        createMaterialGallery();
+
+        const loader = new THREE.GLTFLoader();
         models.forEach((modelData) => {
             const container = document.createElement('div');
             container.className = 'gallery-item';
 
             const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
-            renderer.setSize(400, 400);
+            renderer.setSize(300, 300);
             container.appendChild(renderer.domElement);
 
             const scene = new THREE.Scene();
             const camera = new THREE.PerspectiveCamera(75, 1, 0.1, 1000);
-            camera.position.z = 3;
+            camera.position.z = 2;
 
-            const light = new THREE.AmbientLight(0xffffff, 1);
-            scene.add(light);
+            const ambientLight = new THREE.AmbientLight(0xffffff, 0.6);
+            scene.add(ambientLight);
+
+            const directionalLight = new THREE.DirectionalLight(0xffffff, 0.5);
+            directionalLight.position.set(5, 1, 7.5);
+            scene.add(directionalLight);
 
             loader.load(
                 modelData.path,
                 (gltf) => {
                     const model = gltf.scene;
-                    model.scale.set(0.8, 0.8, 0.8);
-
-                    if (modelData.category === 'font') {
-                        if (!fontGroupMaterials[modelData.group]) {
-                            fontGroupMaterials[modelData.group] = getRandomMaterial();
-                        }
-                        const groupMaterial = fontGroupMaterials[modelData.group];
-                        model.traverse((child) => {
-                            if (child.isMesh) {
-                                child.material = groupMaterial;
-                            }
-                        });
-                    } else if (modelData.category === 'asset') {
-                        model.traverse((child) => {
-                            if (child.isMesh) {
-                                child.material = getRandomMaterial();
-                            }
-                        });
-                    }
-
+                    applyMaterialToModel(model, materials);
                     scene.add(model);
-
                     container.scene = scene;
                     container.renderer = renderer;
+
+                    enableDragAndDrop(container, model);
 
                     container.addEventListener('mousemove', (event) => {
                         const rect = container.getBoundingClientRect();
@@ -374,25 +435,6 @@
             };
             animate();
         });
-
-        const scaleSlider = document.getElementById('scaleSlider');
-
-        scaleSlider.addEventListener('input', (event) => {
-            const scaleValue = parseFloat(event.target.value);
-
-            fontContainers.concat(assetContainer).forEach(container => {
-                container.querySelectorAll('.gallery-item').forEach(item => {
-                    if (item.scene) {
-                        item.scene.traverse((child) => {
-                            if (child.isMesh) {
-                                child.scale.set(scaleValue, scaleValue, scaleValue);
-                            }
-                        });
-                    }
-                });
-            });
-        });
-
     </script>
 </body>
 
