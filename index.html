@@ -2,353 +2,196 @@
 <html lang="en">
 
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>3D Gallery with Subcategories</title>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Rigid 3D Grid</title>
     <style>
+        /* -------- Global -------- */
+        :root {
+            --card-size: 280px;
+            /* fixed width + height for every cell */
+            --gap: 10px;
+            --grid-color: #e3e3e3;
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+
         body {
             margin: 0;
             font-family: Arial, Helvetica, sans-serif;
-            font-weight: lighter;
-            display: flex;
-            flex-direction: column;
-            background-color: #ffffff;
-            font-size: 1.5rem;
             text-transform: uppercase;
-        }
-
-        .gallery {
+            background-image: linear-gradient(var(--grid-color) 1px, transparent 1px),
+                linear-gradient(90deg, var(--grid-color) 1px, transparent 1px);
+            background-size: 40px 40px;
             display: flex;
-            flex-wrap: wrap;
-            width: 100%;
-            height: 100%;
-        }
-
-        .gallery-item {
-            width: 300px;
-            height: 300px;
-            aspect-ratio: 1;
-            perspective: 1000px;
-            position: relative;
-            background-color: #ffffff00;
-            border-radius: 20px;
-            overflow: hidden;
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            align-items: center;
-            overflow: visible;
-            /* Hover effect removed */
-            transition: transform 0.3s ease;
-            /* Smooth transition for hover effect */
-        }
-
-        .gallery-item.dragging {
-            transition: none;
-            /* Remove transition when dragging */
-        }
-
-        canvas {
-            display: block;
-            width: 100%;
-            height: 100%;
-        }
-
-        .subgallery {
-            height: 50%;
-            width: 100%;
-            border: solid 1.5px black;
-            position: relative;
-            overflow: scroll;
-        }
-
-        .font_container,
-        .asset_container {
-            display: flex;
-            flex-wrap: wrap;
-            height: auto;
-            flex-direction: row;
-            gap: 20px;
-            border: solid 1.5px black;
-            position: relative;
-            overflow-x: scroll;
-            overflow-y: hidden;
-            margin: 0;
-        }
-
-        .container-header {
-            display: flex;
-            align-items: center;
-            width: 100%;
-            height: 50px;
-            z-index: 15;
-            border-bottom: solid 1.5px black;
-            font-size: 1.5rem;
-            font-weight: lighter;
-            padding-left: 50px;
-            position: sticky;
-        }
-
-        .material-gallery {
-            height: 100%;
-            display: flex;
-            flex-direction: column;
-            padding: 10px;
-border-left: 1.5px solid black;
-            width: 10vw;
-            gap: 20px;
-            overflow: scroll;
-        }
-
-        .gallery-container {
-            width: 50vw;
             height: 100vh;
-            display: flex;
-            flex-direction: column;
+            overflow: hidden;
         }
 
         main {
-            width: 100vw;
-            height: 100vh;
             display: flex;
-            flex-direction: row;
+            width: 100%;
+            height: 100%;
+        }
+
+        /* -------- Sidebar for materials -------- */
+        .material-gallery {
+            width: 11vw;
+            min-width: 120px;
+            border-right: 1.5px solid black;
+            padding: 8px;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            overflow-y: auto;
+        }
+
+        .material-item img {
+            width: 100%;
+            border-radius: 8px;
+            display: block;
         }
 
         .material-item {
-            width: auto;
+            user-select: none;
         }
 
-        .poster-container {
-            width: 40vw;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            border: solid 1.5px black;
-            position: relative;
+        /* -------- Rigid square grid -------- */
+        .gallery {
+            flex: 1;
+            display: grid;
+            /* each track == card size; auto‑fill ensures as many as fit */
+            grid-template-columns: repeat(auto-fill, var(--card-size));
+            grid-auto-rows: var(--card-size);
+            /* enforce same height */
+            gap: var(--gap);
+            padding: var(--gap);
+            justify-content: center;
+            /* center grid when last row not full */
+            overflow-y: auto;
+        }
+
+        /* -------- Cell -------- */
+        .gallery-item {
+            width: 100%;
             height: 100%;
+            perspective: 1000px;
+            border-radius: 16px;
+            overflow: hidden;
+            position: relative;
+        }
+
+        .gallery-item.dragging {
+            cursor: grabbing;
+        }
+
+        .gallery-item canvas {
+            position: absolute;
+            inset: 0;
+            width: 100%;
+            height: 100%;
+            display: block;
         }
     </style>
 </head>
 
 <body>
     <main>
+        <!-- Material thumbnails for drag‑and‑drop -->
         <div class="material-gallery" id="material_gallery"></div>
-
-        <div class="gallery-container">
-            <div class="gallery">
-
-                <div class="subgallery" id="font_gallery">
-                    <div class="font_container" id="font_container1">
-                        <div class="container-header">
-                            Fontname|TextToImg|Prompt:fnaiovneibeneo|Model|Seed:375937|ImgTo3d|Meshy.ai
-                        </div>
-                    </div>
-                    <div class="font_container" id="font_container2">
-                        <div class="container-header">
-                            Fontname|TextToImg|Prompt:fnaiovneibeneo|Model|Seed:375937|ImgTo3d|Meshy.ai
-                        </div>
-                    </div>
-                </div>
-
-                <div class="subgallery" id="asset_gallery">
-                    <div class="container-header ">Asset Models</div>
-                    <div class="asset_container" id="asset_container"></div>
-                </div>
-            </div>
-        </div>
-
-        <!-- 3D Poster Canvas -->
-        <div class="poster-container" id="poster-container">
-            <canvas id="poster-canvas"></canvas>
-        </div>
+        <!-- Fixed‑size CSS grid with all 3D models -->
+        <div class="gallery" id="gallery"></div>
     </main>
 
+    <!-- Three.js + GLTFLoader -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/loaders/GLTFLoader.js"></script>
+
     <script>
-        const fontContainers = [
-            document.getElementById('font_container1'),
-            document.getElementById('font_container2')
-        ];
-        const assetContainer = document.getElementById('asset_container');
-        const materialGallery = document.getElementById('material_gallery');
-        const posterCanvas = document.getElementById('poster-canvas');
-        const posterContainer = document.getElementById('poster-container');
-
+        /* ---------- Assets ---------- */
         const models = [
-            { path: 'models/fontmodels/font1/fluidsilver_F.glb', name: 'F', category: 'font', group: 1 },
-            { path: 'models/fontmodels/font1/fluidsilver_G.glb', name: 'G', category: 'font', group: 1 },
-            { path: 'models/fontmodels/font1/fluidsilver_M.glb', name: 'M', category: 'font', group: 1 },
-            { path: 'models/fontmodels/font1/fluidsilver_N.glb', name: 'N', category: 'font', group: 1 },
-
-            { path: 'models/fontmodels/font1/fluidsilver_F.glb', name: 'F', category: 'font', group: 2 },
-            { path: 'models/fontmodels/font1/fluidsilver_G.glb', name: 'G', category: 'font', group: 2 },
-            { path: 'models/fontmodels/font1/fluidsilver_M.glb', name: 'M', category: 'font', group: 2 },
-            { path: 'models/fontmodels/font1/fluidsilver_N.glb', name: 'N', category: 'font', group: 2 },
-
-            { path: 'models/assetmodels/Fractal_Bloom_0110003604_texture.glb', name: 'Fractal Bloom', category: 'asset' },
-            { path: 'models/assetmodels/Spiked_Sphere_0110003610_texture.glb', name: 'Spiked Sphere', category: 'asset' },
-            { path: 'models/assetmodels/Coral_Elegance_0110010258_texture.glb', name: 'Coral', category: 'asset' },
-            { path: 'models/assetmodels/Bubble_Cluster_0109205138_texture.glb', name: 'bubblecluster', category: 'asset' },
-            { path: 'models/assetmodels/Interwoven_Radiance_0110010745_texture.glb', name: 'Radiance', category: 'asset' },
-            { path: 'models/assetmodels/Neon_Knot_0109204513_texture.glb', name: 'knot', category: 'asset' },
-            { path: 'models/assetmodels/Spiral_Bloom_0110003556_texture.glb', name: 'spiral', category: 'asset' },
+            { path: 'models/fontmodels/ballontube/Balloontube_T.glb' },
+            { path: 'models/fontmodels/brainy/Brainy_H.glb' },
+            { path: 'models/fontmodels/brick/brick_E.glb' },
+            { path: 'models/fontmodels/cauliflower/cauliflower_B.glb' },
+            { path: 'models/fontmodels/dotted/dotted_A.glb' },
+            { path: 'models/fontmodels/galaktus/galaktus_D.glb' },
+            { path: 'models/fontmodels/spiky/spiky_A.glb' },
+            { path: 'models/fontmodels/stacked/stacked_H.glb' },
+            { path: 'models/fontmodels/font1/fluidsilver_F.glb' },
+            { path: 'models/fontmodels/font1/fluidsilver_G.glb' },
+            { path: 'models/assetmodels/Fractal_Bloom_0110003604_texture.glb' },
+            { path: 'models/assetmodels/Spiked_Sphere_0110003610_texture.glb' },
+            { path: 'models/assetmodels/Coral_Elegance_0110010258_texture.glb' },
+            { path: 'models/assetmodels/Bubble_Cluster_0109205138_texture.glb' },
+            { path: 'models/assetmodels/Interwoven_Radiance_0110010745_texture.glb' },
+            { path: 'models/assetmodels/Neon_Knot_0109204513_texture.glb' },
+            { path: 'models/assetmodels/Spiral_Bloom_0110003556_texture.glb' },
         ];
+        const materialFolders = ['Snow007C_2K-JPG', 'Plastic014B_2K-JPG', 'Tiles044_2K-JPG', 'Cork004_4K-JPG', 'Moss002_4K-JPG', 'Fabric070_4K-JPG', 'Sponge001_2K-JPG', 'Terrazzo009_4K-JPG'];
 
-        const materialFolders = [
-            'Snow007C_2K-JPG',
-            'Plastic014B_2K-JPG',
-            'Tiles044_2K-JPG'
-
-        ];
-
+        /* ---------- Materials ---------- */
         const textureLoader = new THREE.TextureLoader();
-        const materials = materialFolders.map(folder => {
-            return new THREE.MeshStandardMaterial({
-                map: textureLoader.load(`materials/${folder}/${folder}_Color.jpg`),
-                normalMap: textureLoader.load(`materials/${folder}/${folder}_NormalGL.jpg`),
-                roughnessMap: textureLoader.load(`materials/${folder}/${folder}_Roughness.jpg`),
-                metalnessMap: textureLoader.load(`materials/${folder}/${folder}_Metalness.jpg`),
-                metalness: 0.4,
-                roughness: 1
-            });
+        const materials = materialFolders.map(f => new THREE.MeshStandardMaterial({
+            map: textureLoader.load(`materials/${f}/${f}_Color.jpg`),
+            normalMap: textureLoader.load(`materials/${f}/${f}_NormalGL.jpg`),
+            roughnessMap: textureLoader.load(`materials/${f}/${f}_Roughness.jpg`),
+            metalnessMap: textureLoader.load(`materials/${f}/${f}_Metalness.jpg`),
+            metalness: 0.4, roughness: 1,
+        }));
+        function randomizeMaterial(model) {
+            model.traverse(o => o.isMesh && (o.material = materials[Math.floor(Math.random() * materials.length)]));
+        }
+
+        /* ---------- Sidebar thumbnails ---------- */
+        const sidebar = document.getElementById('material_gallery');
+        materialFolders.forEach((f, i) => {
+            const item = document.createElement('div'); item.className = 'material-item'; item.draggable = true;
+            const img = new Image(); img.src = `materials/${f}/${f.split('_')[0]}.png`; item.appendChild(img);
+            item.addEventListener('dragstart', e => e.dataTransfer.setData('text/plain', i));
+            sidebar.appendChild(item);
         });
 
-        function applyMaterialToModel(model, materials) {
-            model.traverse((child) => {
-                if (child.isMesh) {
-                    const randomMaterial = materials[Math.floor(Math.random() * materials.length)];
-                    child.material = randomMaterial;
-                }
-            });
-        }
-
-        let isDragging = false;  // Variable, um den Dragging-Zustand zu verfolgen
-
-        function enableDragAndDrop(container, model) {
-            container.addEventListener('dragover', (event) => {
-                event.preventDefault();
-                container.style.borderColor = 'green';
-            });
-
-            container.addEventListener('dragleave', () => {
-                container.style.borderColor = 'red';
-            });
-
-            container.addEventListener('drop', (event) => {
-                event.preventDefault();
-                container.style.borderColor = 'red';
-
-                const materialIndex = event.dataTransfer.getData('text/plain');
-                if (materialIndex !== undefined) {
-                    const selectedMaterial = materials[materialIndex];
-                    applyMaterialToModel(model, [selectedMaterial]);
-                }
-            });
-
-            container.addEventListener('mousedown', (event) => {
-                isDragging = true;  // Setzt isDragging auf true, wenn das Modell geklickt wird
-                container.classList.add('dragging');  // Entfernt Hover-Effekt
-            });
-
-            container.addEventListener('mouseup', (event) => {
-                isDragging = false;  // Setzt isDragging auf false, wenn das Modell losgelassen wird
-                container.classList.remove('dragging');  // Fügt den Hover-Effekt wieder hinzu
-            });
-
-            // Bewege das Modell nur, wenn es nicht gerade gezogen wird
-            container.addEventListener('mousemove', (event) => {
-                if (isDragging) return;  // Keine Bewegung wenn das Modell gezogen wird
-
-                const rect = container.getBoundingClientRect();
-                const x = (event.clientX - rect.left) / rect.width * 2 - 1;
-                const y = -(event.clientY - rect.top) / rect.height * 2 + 1;
-                model.rotation.x = y * 0.5;
-                model.rotation.y = x * 0.5;
-            });
-        }
-
-        function createMaterialGallery() {
-            materialFolders.forEach((folder, index) => {
-                const materialItem = document.createElement('div');
-                materialItem.className = 'material-item';
-                materialItem.draggable = true;
-
-                const imagePath = `materials/${folder}/${folder.split('_')[0]}.png`;
-                const image = new Image();
-                image.src = imagePath;
-                image.alt = folder;
-                image.style.width = "120px";
-                image.style.height = "120px";
-                materialItem.appendChild(image);
-
-                materialItem.addEventListener('dragstart', (event) => {
-                    event.dataTransfer.setData('text/plain', index);
-                });
-
-                materialGallery.appendChild(materialItem);
-            });
-        }
-
-        createMaterialGallery();
-
+        /* ---------- Grid ---------- */
+        const grid = document.getElementById('gallery');
         const loader = new THREE.GLTFLoader();
-        models.forEach((modelData) => {
-            const container = document.createElement('div');
-            container.className = 'gallery-item';
+        let isDragging = false;
+        const CARD = parseInt(getComputedStyle(document.documentElement).getPropertyValue('--card-size'));
 
+        models.forEach(data => {
+            const cell = document.createElement('div'); cell.className = 'gallery-item';
             const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
-            renderer.setSize(300, 300);
-            container.appendChild(renderer.domElement);
+            renderer.setPixelRatio(window.devicePixelRatio);
+            renderer.setSize(CARD, CARD);
+            cell.appendChild(renderer.domElement);
+            grid.appendChild(cell);
 
             const scene = new THREE.Scene();
-            const camera = new THREE.PerspectiveCamera(75, 1, 0.1, 1000);
-            camera.position.z = 2;
+            const camera = new THREE.PerspectiveCamera(60, 1, 0.1, 1000);
+            camera.position.z = 2.5;
+            scene.add(new THREE.AmbientLight(0xffffff, 0.6));
+            const dir = new THREE.DirectionalLight(0xffffff, 0.7); dir.position.set(5, 3, 8); scene.add(dir);
 
-            const ambientLight = new THREE.AmbientLight(0xffffff, 0.6);
-            scene.add(ambientLight);
-
-            const directionalLight = new THREE.DirectionalLight(0xffffff, 0.5);
-            directionalLight.position.set(5, 1, 7.5);
-            scene.add(directionalLight);
-
-            loader.load(
-                modelData.path,
-                (gltf) => {
-                    const model = gltf.scene;
-                    applyMaterialToModel(model, materials);
-                    scene.add(model);
-                    container.scene = scene;
-                    container.renderer = renderer;
-
-                    enableDragAndDrop(container, model);
-
-                    container.addEventListener('mousemove', (event) => {
-                        const rect = container.getBoundingClientRect();
-                        const x = (event.clientX - rect.left) / rect.width * 2 - 1;
-                        const y = -(event.clientY - rect.top) / rect.height * 2 + 1;
-                        model.rotation.x = y * 0.5;
-                        model.rotation.y = x * 0.5;
-                    });
-                },
-                undefined,
-                (error) => {
-                    console.error('Error loading model:', error);
-                }
-            );
-
-            if (modelData.category === 'font') {
-                fontContainers[modelData.group - 1].appendChild(container);
-            } else if (modelData.category === 'asset') {
-                assetContainer.appendChild(container);
-            }
-
-            const animate = () => {
-                requestAnimationFrame(animate);
-                renderer.render(scene, camera);
-            };
-            animate();
+            loader.load(data.path, gltf => {
+                const model = gltf.scene; randomizeMaterial(model); scene.add(model);
+                setupInteractions(cell, model);
+            });
+            function loop() { requestAnimationFrame(loop); renderer.render(scene, camera); } loop();
         });
+
+        function setupInteractions(cell, model) {
+            /* drag‑and‑drop material swap */
+            cell.addEventListener('dragover', e => { e.preventDefault(); cell.style.outline = '2px solid green'; });
+            cell.addEventListener('dragleave', () => cell.style.outline = '');
+            cell.addEventListener('drop', e => { e.preventDefault(); cell.style.outline = ''; const idx = e.dataTransfer.getData('text/plain'); if (idx !== '') model.traverse(o => o.isMesh && (o.material = materials[idx])); });
+            /* rotation */
+            cell.addEventListener('mousemove', e => { if (isDragging) return; const r = cell.getBoundingClientRect(); const x = (e.clientX - r.left) / r.width * 2 - 1; const y = -(e.clientY - r.top) / r.height * 2 + 1; model.rotation.x = y * 0.5; model.rotation.y = x * 0.5; });
+            /* dragging state for rotation lock */
+            cell.addEventListener('mousedown', () => { isDragging = true; cell.classList.add('dragging'); });
+            cell.addEventListener('mouseup', () => { isDragging = false; cell.classList.remove('dragging'); });
+        }
     </script>
 </body>
 
